@@ -1,13 +1,13 @@
 <Project Sdk="Dalamud.CN.NET.SDK/15.0.0">
   <PropertyGroup>
-    <Version>7.50.1.0</Version>
-    <PackageProjectUrl>https: //github.com/goatcorp/SamplePlugin</PackageProjectUrl>
+    <Version>7.50.1.1</Version>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <Author>Siren, Latihas</Author>
     <Punchline>AI幻卡，基于同名Python项目。目前项目仍处于测试阶段，请多多反馈。</Punchline>
     <Description>AI幻卡</Description>
     <Name>TTC_Siren</Name>
     <OutputPath>../bin</OutputPath>
+    <RepoUrl>https://github.com/Latihas/TTC_Siren</RepoUrl>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
