@@ -8,4 +8,8 @@
 <!--    <PackageReference Include="CsvHelper" Version="33.1.0"/>-->
 <!--    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8"/>-->
 <!--  </ItemGroup>-->
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == ''">
+    <DalamudLibPath>$(appdata)\XIVLauncherCN\addon\Hooks\dev</DalamudLibPath>
+    <AssemblySearchPaths>$(AssemblySearchPaths);$(DalamudLibPath)</AssemblySearchPaths>
+  </PropertyGroup>
 </Project>
