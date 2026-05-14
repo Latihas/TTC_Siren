@@ -1,15 +1,18 @@
 <Project Sdk="Dalamud.CN.NET.SDK/15.0.0">
   <PropertyGroup>
-    <Version>6.6.6.6</Version>
+    <Version>7.50.1.0</Version>
     <PackageProjectUrl>https: //github.com/goatcorp/SamplePlugin</PackageProjectUrl>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <Author>Siren, Latihas</Author>
-    <Punchline>内部幻卡</Punchline>
-    <Description>内部幻卡</Description>
+    <Punchline>AI幻卡，基于同名Python项目。目前项目仍处于测试阶段，请多多反馈。</Punchline>
+    <Description>AI幻卡</Description>
     <Name>TTC_Siren</Name>
+    <OutputPath>../bin</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="ECommons" Version="3.2.0.18"/>
+    <PackageReference Include="ECommons" Version="3.2.0.19" />
     <ProjectReference Include="..\TtcServer\TtcServer.csproj"/>
   </ItemGroup>
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == ''">
