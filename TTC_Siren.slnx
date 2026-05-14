@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="TtcServer/TtcServer.csproj"/>
+  <Project Path="TTC_Siren/TTC_Siren.csproj"/>
+</Solution>

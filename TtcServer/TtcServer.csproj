@@ -1,0 +1,11 @@
+﻿<Project Sdk="Dalamud.CN.NET.SDK/15.0.0">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0-windows7</TargetFramework>
+    <Use_DalamudPackager>false</Use_DalamudPackager>
+  </PropertyGroup>
+<!--  <ItemGroup>-->
+<!--    <PackageReference Include="CsvHelper" Version="33.1.0"/>-->
+<!--    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8"/>-->
+<!--  </ItemGroup>-->
+</Project>

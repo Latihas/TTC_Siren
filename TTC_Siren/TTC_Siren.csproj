@@ -1,0 +1,19 @@
+<Project Sdk="Dalamud.CN.NET.SDK/15.0.0">
+  <PropertyGroup>
+    <Version>6.6.6.6</Version>
+    <PackageProjectUrl>https: //github.com/goatcorp/SamplePlugin</PackageProjectUrl>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <Author>Siren, Latihas</Author>
+    <Punchline>内部幻卡</Punchline>
+    <Description>内部幻卡</Description>
+    <Name>TTC_Siren</Name>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="ECommons" Version="3.2.0.18"/>
+    <ProjectReference Include="..\TtcServer\TtcServer.csproj"/>
+  </ItemGroup>
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == ''">
+    <DalamudLibPath>$(appdata)\XIVLauncherCN\addon\Hooks\dev</DalamudLibPath>
+    <AssemblySearchPaths>$(AssemblySearchPaths);$(DalamudLibPath)</AssemblySearchPaths>
+  </PropertyGroup>
+</Project>
