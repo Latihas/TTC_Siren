@@ -300,7 +300,7 @@ public class MainWindow : Window {
 
 		// === 标题行 ===
 		if (ImGui.Button("重置设置")) {
-			Plugin.Configuration.UnknownCardConfig = new UnknownCardConfig();
+			Utils.UnknownCardConfig=Plugin.Configuration.UnknownCardConfig = new UnknownCardConfig();
 			Plugin.Configuration.Save();
 		}
 		ImGui.TextColored(new Vector4(1, 1, 0, 1), "幻卡对局状态监控");

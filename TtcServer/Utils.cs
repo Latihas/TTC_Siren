@@ -125,7 +125,7 @@ public static class Utils {
 
 	private static IPluginLog Log;
 	internal static IDataManager DataManager;
-	internal static UnknownCardConfig UnknownCardConfig;
+	public static UnknownCardConfig UnknownCardConfig;
 
 	public static void Init(IPluginLog log, IDataManager dataManager, UnknownCardConfig unknownCardConfig) {
 		Log = log;
