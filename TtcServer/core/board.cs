@@ -11,7 +11,7 @@ public class Board : ICloneable {
 		[null, null, null]
 	];
 
-	                          //在指定位置放置卡牌，若成功返回True，若已被占用返回False
+	//在指定位置放置卡牌，若成功返回True，若已被占用返回False
 	public bool place_card(int row, int col, Card card) {
 		if (grid[row][col] is null) {
 			grid[row][col] = card;
@@ -20,20 +20,20 @@ public class Board : ICloneable {
 		return false;
 	}
 
-	                          //获取指定格子的卡牌
+	//获取指定格子的卡牌
 	public Card? get_card(int row, int col) => grid[row][col];
 
-	                          //判断指定格子是否为空。
+	//判断指定格子是否为空。
 	public bool is_empty(int row, int col) => grid[row][col] is null;
 
-	                          //移除指定位置的卡牌，返回被移除的卡牌，如果位置为空则返回None。
+	//移除指定位置的卡牌，返回被移除的卡牌，如果位置为空则返回None。
 	public Card? remove_card(int row, int col) {
 		var card = grid[row][col];
 		grid[row][col] = null;
 		return card;
 	}
 
-	                          //返回所有可用（空）格子的坐标列表。
+	//返回所有可用（空）格子的坐标列表。
 	public List<(int, int)> available_positions() {
 		var available = new List<(int, int)>();
 		for (var r = 0; r < 3; r++)
@@ -47,7 +47,7 @@ public class Board : ICloneable {
 		return grid.SelectMany(row => row).OfType<Card>().Any(c => c.card_id == card_id);
 	}
 
-	                          //将棋盘状态转换为字符串。
+	//将棋盘状态转换为字符串。
 	public override string ToString() {
 		var card_lines = new string[]?[][] {
 			[null, null, null],
@@ -60,20 +60,22 @@ public class Board : ICloneable {
 			if (card is null)
 				card_lines[r][c] = ["       ", "       ", "       ", "       "];
 			else {
-				                          //只在这里加颜色
-				var color_start = "";
-				var color_end = "";
-				if (card.owner == "red") {
-					color_start = "\033[31m";
-					color_end = "\033[0m";
-				} else if (card.owner == "blue") {
-					color_start = "\033[34m";
-					color_end = "\033[0m";
-				}
-				card_lines[r][c] = card.display_multiline().Select(line => $"{color_start}{line}{color_end}").ToArray();
+				//只在这里加颜色
+				// var color_start = "";
+				// var color_end = "";
+				// if (card.owner == "red") {
+				// 	color_start = "\033[31m";
+				// 	color_end = "\033[0m";
+				// } else if (card.owner == "blue") {
+				// 	color_start = "\033[34m";
+				// 	color_end = "\033[0m";
+				// }
+				card_lines[r][c] = card.display_multiline()
+					// .Select(line => $"{color_start}{line}{color_end}")
+					.ToArray();
 			}
 		}
-		                          //拼接每一行
+		//拼接每一行
 		List<string> lines = [];
 		const string sep = "+-------+-------+-------+";
 		for (var row = 0; row < 3; row++) {

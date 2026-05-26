@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using MgAl2O4.Utils;
-using TTC;
+using TTC_Siren;
 
 namespace TriadBuddyPlugin;
 

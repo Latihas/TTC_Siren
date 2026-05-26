@@ -17,7 +17,6 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
-using ECommons;
 using ECommons.GameFunctions;
 using ECommons.UIHelpers.AddonMasterImplementations;
 using FFTriadBuddy;
@@ -25,24 +24,19 @@ using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using TriadBuddyPlugin;
-using TTC;
 using TtcServer;
 using TtcServer.config;
-using static TTC.Plugin;
+using static TTC_Siren.Plugin;
+using static TtcServer.AiServer;
 using static TtcServer.Utils;
-using FfxivAddonTripleTriad = FFXIVClientStructs.FFXIV.Client.UI.AddonTripleTriad;
 using ObjectKind = Dalamud.Game.ClientState.Objects.Enums.ObjectKind;
-using Plugin = TTC.Plugin;
-using TtcCallback = ECommons.Automation.Callback;
+using Callback = ECommons.Automation.Callback;
+using static ECommons.GenericHelpers;
+using static TriadBuddyPlugin.UIReaderTriadGame;
 
-public class MainWindow : Window {
-	public MainWindow() : base("TTC_Siren") {
-		SizeConstraints = new WindowSizeConstraints {
-			MinimumSize = new Vector2(800, 600),
-			MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
-		};
-	}
+namespace TTC_Siren;
 
+public class MainWindow() : Window("TTC_Siren") {
 	public unsafe void Dispose() {
 		var test2 = (AtkUnitBase*)GameGui.GetAddonByName("Social").Address;
 		if (test2 != null) {
@@ -51,7 +45,6 @@ public class MainWindow : Window {
 			test2->GetNodeById(1)->ScaleY = 1;
 			test2->Close(true);
 		}
-		if (cancellationTokenSource is { IsCancellationRequested: false }) { cancellationTokenSource.Cancel(); }
 
 		// 重置自动AI状态
 		autoAiEnabled = false;
@@ -62,39 +55,21 @@ public class MainWindow : Window {
 		ClearTriadStatus();
 	}
 
-	private string customName = "";
-	private string customWorld = "";
-	private string customMessage = "";
-	private string customTargetName = "";
-	private string 被搜索的人名 = "";
-	private bool isAutoSearchEnabled = false;
-	private float targetX = 0f;
-	private float targetY = 0f;
-	private float targetZ = 0f;
-	private bool lockX = false;
-	private bool lockY = false;
-	private bool lockZ = false;
-	private bool firstclose = false;
-	private XivChatType customType = XivChatType.Debug;
-	// Dictionary to store locked positions for multiple targets
-	private Dictionary<ulong, (float X, float Y, float Z, bool LockX, bool LockY, bool LockZ)> lockedTargets = new();
-	private ChatHelper chatHelper = new();
-	private static CancellationTokenSource cancellationTokenSource;
-	private UIReaderTriadGame uiReaderGame = new();
-	private UIReaderTriadPrep uiReaderPrep = new();
-	private UIReaderTriadResults uiReaderResults = new();
+	private readonly UIReaderTriadGame uiReaderGame = new();
+	private readonly UIReaderTriadPrep uiReaderPrep = new();
+	private readonly UIReaderTriadResults uiReaderResults = new();
 	private string triadGameState = "未知";
 	private string triadRules = "未知";
 	private string triadCards = "未知";
 	private string triadProgress = "未知";
 	private string triadNpc = "未知";
 	private string triadResult = "未知";
-	private UIReaderTriadCardList uiReaderCardList = new();
-	private UIReaderTriadDeckEdit uiReaderDeckEdit = new();
+	private readonly UIReaderTriadCardList uiReaderCardList = new();
+	private readonly UIReaderTriadDeckEdit uiReaderDeckEdit = new();
 	private string triadCardListInfo = "未知";
 	private string triadDeckEditInfo = "未知";
-	private int lastPlaced = -1; // 记录上一次的已下卡数
-	private int myOwner; // 1=蓝方, 2=红方
+	// private int lastPlaced = -1; // 记录上一次的已下卡数
+	private ETriadCardOwner myOwner;
 	private string myName = "";
 	private string blueName = "";
 	private string redName = "";
@@ -107,35 +82,17 @@ public class MainWindow : Window {
 	// 手动设置己方手牌可用状态（用于秩序/混乱规则）
 	private bool[] myHandCanUse = [true, true, true, true, true]; // 默认5张牌都可用
 	private bool showHandSelector;
-
 	// 自动AI对局相关变量
 	private bool autoAiEnabled;
 	private bool isMyTurnPrevious; // 记录上一帧是否是我的回合
 	private bool aiRequestInProgress; // 防止重复请求
 	private bool autoExecuteAfterAi; // 标记是否需要在AI响应后自动执行
 
-	// 1. 定义AI返回结构
-	//迁移到Server
-
-
-	public static unsafe bool TryGetAddonByName<T>(string Addon, out T* AddonPtr) where T : unmanaged {
-		var a = GameGui.GetAddonByName(Addon);
-		if (a.IsNull) {
-			AddonPtr = null;
-			return false;
-		}
-		AddonPtr = (T*)a.Address;
-		return true;
-	}
-
-
 	private static string FormatCard(UIStateTriadCard? card) {
 		if (card == null) return "empty";
 		if (!card.isPresent) return "empty";
 		var value = $"[{card.numU:X}-{card.numR:X}-{card.numD:X}-{card.numL:X}], owner:{card.owner}";
-		if (card is { numU: 0, numR: 0, numD: 0, numL: 0, owner: 0 })
-			return "[暗牌]";
-		return value;
+		return card is { numU: 0, numR: 0, numD: 0, numL: 0, owner: 0 } ? "[暗牌]" : value;
 	}
 
 	private static void ShowDeck(string title, UIStateTriadCard[]? deck, int owner) {
@@ -147,13 +104,12 @@ public class MainWindow : Window {
 		for (var i = 0; i < deck.Length; i++) {
 			var card = deck[i];
 			var text = $"{i + 1}. {FormatCard(card)}";
-			if (card is not { isPresent: true }) {
+			if (card is not { isPresent: true })
 				ImGui.TextColored(new Vector4(0.5f, 0.5f, 0.5f, 1f), text + " (已上场)");
-			} else if (card is { numU: 0, numR: 0, numD: 0, numL: 0, owner: 0 }) {
+			else if (card is { numU: 0, numR: 0, numD: 0, numL: 0, owner: 0 })
 				ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1f), text + " (暗牌)");
-			} else {
+			else
 				ImGui.TextColored(new Vector4(1f, 1f, 1f, 1f), text);
-			}
 		}
 	}
 
@@ -168,7 +124,7 @@ public class MainWindow : Window {
 			for (var col = 0; col < 3; col++) {
 				var idx = row * 3 + col;
 				var card = board[idx];
-				if (card == null || !card.isPresent)
+				if (card is not { isPresent: true })
 					line += "[ - ] ";
 				else if (card is { numU: 0, numR: 0, numD: 0, numL: 0, owner: 0 })
 					line += "[暗] ";
@@ -194,7 +150,7 @@ public class MainWindow : Window {
 			if (player.ObjectKind != ObjectKind.EventNpc) continue;
 
 
-			if (player.DataId == 1011061) {
+			if (player.BaseId == 1011061) {
 				var obj = player.Struct();
 
 				if (obj->NamePlateIconId == 61721 && !Condition[ConditionFlag.InDutyQueue]) {
@@ -210,36 +166,32 @@ public class MainWindow : Window {
 		// Use direct GameGui service to get addon
 		var addonPtrSelect = GameGui.GetAddonByName("TripleTriadPickUpDeckSelect");
 		if (!addonPtrSelect.IsNull) {
-			var addon = (FfxivAddonTripleTriad*)addonPtrSelect.Address;
-			TtcCallback.Fire(&addon->AtkUnitBase, true, 1);
-			TtcCallback.Fire(&addon->AtkUnitBase, true, 2);
+			var addon = (AddonTripleTriad*)addonPtrSelect.Address;
+			Callback.Fire(&addon->AtkUnitBase, true, 1);
+			Callback.Fire(&addon->AtkUnitBase, true, 2);
 		}
 		var addonPtrC = GameGui.GetAddonByName("TripleTriadDeckConfirmation");
 		if (!addonPtrC.IsNull) {
-			var addon = (FfxivAddonTripleTriad*)addonPtrC.Address;
-			TtcCallback.Fire(&addon->AtkUnitBase, true, 0);
+			var addon = (AddonTripleTriad*)addonPtrC.Address;
+			Callback.Fire(&addon->AtkUnitBase, true, 0);
 		}
 		var addonPtrr = GameGui.GetAddonByName("TripleTriadTournamentResult");
 		if (!addonPtrr.IsNull) {
-			var addon = (FfxivAddonTripleTriad*)addonPtrr.Address;
-			TtcCallback.Fire(&addon->AtkUnitBase, true, 2, false);
-			TtcCallback.Fire(&addon->AtkUnitBase, true, 0, false);
+			var addon = (AddonTripleTriad*)addonPtrr.Address;
+			Callback.Fire(&addon->AtkUnitBase, true, 2, false);
+			Callback.Fire(&addon->AtkUnitBase, true, 0, false);
 		}
 		var addonPtrre = GameGui.GetAddonByName("TripleTriadTournamentReport");
 		if (!addonPtrre.IsNull) {
-			var addon = (FfxivAddonTripleTriad*)addonPtrre.Address;
-			TtcCallback.Fire(&addon->AtkUnitBase, true, 0, false);
+			var addon = (AddonTripleTriad*)addonPtrre.Address;
+			Callback.Fire(&addon->AtkUnitBase, true, 0, false);
 		}
 		var addonPtrrew = GameGui.GetAddonByName("TripleTriadTournamentReward");
 		if (!addonPtrrew.IsNull) {
-			var addon = (FfxivAddonTripleTriad*)addonPtrrew.Address;
-			TtcCallback.Fire(&addon->AtkUnitBase, true, 0, false);
+			var addon = (AddonTripleTriad*)addonPtrrew.Address;
+			Callback.Fire(&addon->AtkUnitBase, true, 0, false);
 		}
 	}
-
-	private bool autorece = false;
-	private bool autorece2 = false;
-
 
 	private static bool TryClickSelectString(string text) {
 		var addonWrapper = GameGui.GetAddonByName("SelectString");
@@ -260,7 +212,7 @@ public class MainWindow : Window {
 
 	private static void TryClickSelectYesno() {
 		var addonWrapper = GameGui.GetAddonByName("SelectYesno");
-		if (addonWrapper.IsNull)  return; 
+		if (addonWrapper.IsNull) return;
 		new AddonMaster.SelectYesno(addonWrapper.Address).Yes();
 	}
 
@@ -300,7 +252,7 @@ public class MainWindow : Window {
 
 		// === 标题行 ===
 		if (ImGui.Button("重置设置")) {
-			Utils.UnknownCardConfig=Plugin.Configuration.UnknownCardConfig = new UnknownCardConfig();
+			Utils.UnknownCardConfig = Plugin.Configuration.UnknownCardConfig = new UnknownCardConfig();
 			Plugin.Configuration.Save();
 		}
 		ImGui.TextColored(new Vector4(1, 1, 0, 1), "幻卡对局状态监控");
@@ -336,11 +288,11 @@ public class MainWindow : Window {
 		ImGui.Text($"红方时间: {red_time}");
 		ImGui.Text($"蓝方时间: {blue_time}");
 
-		if (myOwner == 1 && blue_time != "--:--")
+		if (myOwner == ETriadCardOwner.Blue && blue_time != "--:--")
 			ImGui.Text($"到我的回合");
-		if (myOwner == 2 && red_time != "--:--")
+		if (myOwner == ETriadCardOwner.Red && red_time != "--:--")
 			ImGui.Text($"到我的回合");
-		if (myOwner != 1 && myOwner != 2) ImGui.Text($"玩家位置未知");
+		if (myOwner != ETriadCardOwner.Blue && myOwner != ETriadCardOwner.Red) ImGui.Text($"玩家位置未知");
 		if (Condition[ConditionFlag.InDutyQueue])
 			ImGui.Text("排本中");
 
@@ -386,9 +338,9 @@ public class MainWindow : Window {
 			// 显示额外的状态信息
 			ImGui.Spacing();
 			ImGui.TextColored(new Vector4(0.8f, 0.8f, 0.8f, 1f), $"自动AI状态:");
-			ImGui.Text($"  当前玩家: {(myOwner == 1 ? "蓝方" : myOwner == 2 ? "红方" : "未知")}");
+			ImGui.Text($"  当前玩家: {(myOwner == ETriadCardOwner.Blue ? "蓝方" : myOwner == ETriadCardOwner.Red ? "红方" : "未知")}");
 
-			var isMyTurnNow = myOwner == 1 && blue_time != "--:--" || myOwner == 2 && red_time != "--:--";
+			var isMyTurnNow = myOwner == ETriadCardOwner.Blue && blue_time != "--:--" || myOwner == ETriadCardOwner.Red && red_time != "--:--";
 			var turnColor = isMyTurnNow ? new Vector4(0.2f, 1f, 0.2f, 1f) : new Vector4(0.8f, 0.8f, 0.8f, 1f);
 			ImGui.TextColored(turnColor, $"  轮次状态: {(isMyTurnNow ? "我的回合" : "等待中")}");
 
@@ -404,9 +356,7 @@ public class MainWindow : Window {
 		}
 
 		// 显示手牌可用性设置面板
-		if (showHandSelector) {
-			DrawHandSelector();
-		}
+		if (showHandSelector) DrawHandSelector();
 
 		ImGui.Spacing();
 
@@ -545,14 +495,25 @@ public class MainWindow : Window {
 		var test = (AtkUnitBase*)GameGui.GetAddonByName("TripleTriad").Address;
 
 		if (test != null) {
+			redName = "";
 			try {
 				redName = test->GetTextNodeById(186)->GetAsAtkTextNode()->NodeText.GetText();
+			} catch (Exception ex) {
+				Log.Error($"对手名字获取失败(186): {ex}");
+			}
+			try {
+				redName = test->GetTextNodeById(186)->GetAsAtkTextNode()->NodeText.GetText();
+			} catch (Exception ex) {
+				Log.Error($"对手名字获取失败(181): {ex}");
+			}
+			if (string.IsNullOrEmpty(redName)) redName = "对手名字获取失败";
+			try {
 				blueName = test->GetTextNodeById(139)->GetAsAtkTextNode()->NodeText.GetText();
 				blue_time = test->GetTextNodeById(128)->GetAsAtkTextNode()->NodeText.GetText();
 				red_time = test->GetTextNodeById(170)->GetAsAtkTextNode()->NodeText.GetText();
 				myName = ObjectTable.LocalPlayer?.Name.ToString() ?? "";
-				if (myName != redName) myOwner = 1;
-				else if (myName != blueName) myOwner = 2;
+				if (myName != redName) myOwner = ETriadCardOwner.Blue;
+				else if (myName != blueName) myOwner = ETriadCardOwner.Red;
 
 				//Plugin.Log.Debug($"Red Name: {redName}, Blue Name: {blueName}, My Name: {myName}, My Owner: {myOwner}");
 				triadRules = string.Join(", ", new[] {
@@ -654,7 +615,7 @@ public class MainWindow : Window {
 		// 获取当前己方手牌信息用于显示
 		var gameState = uiReaderGame.currentState;
 		if (gameState != null) {
-			var myDeck = myOwner == 1 ? gameState.blueDeck : gameState.redDeck;
+			var myDeck = myOwner == ETriadCardOwner.Blue ? gameState.blueDeck : gameState.redDeck;
 			if (myDeck != null) {
 				// 确保数组大小匹配实际手牌数量
 				var deckSize = myDeck.Length;
@@ -675,7 +636,7 @@ public class MainWindow : Window {
 					if (card is { isPresent: true }) {
 						var cardInfo = $"[{card.numU:X}-{card.numR:X}-{card.numD:X}-{card.numL:X}]";
 
-						var canUse = i < myHandCanUse.Length ? myHandCanUse[i] : true;
+						var canUse = i >= myHandCanUse.Length || myHandCanUse[i];
 						if (ImGui.Checkbox($"##card{i}", ref canUse)) {
 							if (i < myHandCanUse.Length) {
 								myHandCanUse[i] = canUse;
@@ -784,7 +745,7 @@ public class MainWindow : Window {
 			return -1;
 		}
 
-		var myDeck = myOwner == 1 ? gameState.blueDeck : gameState.redDeck;
+		var myDeck = myOwner == ETriadCardOwner.Blue ? gameState.blueDeck : gameState.redDeck;
 		if (myDeck == null) {
 			return -1;
 		}
@@ -816,7 +777,7 @@ public class MainWindow : Window {
 		var gameState = uiReaderGame.currentState;
 		if (gameState == null) return -1;
 
-		var myDeck = myOwner == 1 ? gameState.blueDeck : gameState.redDeck;
+		var myDeck = myOwner == ETriadCardOwner.Blue ? gameState.blueDeck : gameState.redDeck;
 		if (myDeck == null) return -1;
 
 		// 尝试通过卡牌数值匹配
@@ -934,9 +895,24 @@ public class MainWindow : Window {
 			Log.Info($"执行AI推荐: 放置卡牌 {cardIndex + 1} ({displayName}) 到位置 {boardText} (索引: {boardIndex})");
 
 			// 调用放置卡牌方法
-			TriadAutomater.PlaceCard(cardIndex, boardIndex);
+			PlaceCard(cardIndex, boardIndex);
 		} catch (Exception ex) {
 			Log.Error($"执行AI移动时出错: {ex.Message}");
+		}
+	}
+
+	private static unsafe void PlaceCard(int which, int slot) {
+		Chat.Print($"放置卡牌: {which} 到位置: {slot}");
+		try {
+			if (TryGetAddonByName("TripleTriad", out AddonTripleTriad* addon)) {
+				Callback.Fire(&addon->AtkUnitBase, true, 14, (uint)slot + ((uint)which << 16));
+				addon->AtkUnitBase.Update(0);
+				addon->TurnState = 0;
+			} else {
+				Chat.PrintError("无法找到 TripleTriad UI 界面");
+			}
+		} catch (Exception ex) {
+			Chat.PrintError($"放置卡牌失败: {ex.Message}");
 		}
 	}
 
@@ -953,14 +929,14 @@ public class MainWindow : Window {
 		if (!autoAiEnabled || gameState == null || myOwner == 0) return;
 
 		// 检测是否轮到我的回合
-		var isMyTurnNow = myOwner == 1 && blue_time != "--:--" || myOwner == 2 && red_time != "--:--";
+		var isMyTurnNow = myOwner == ETriadCardOwner.Blue && blue_time != "--:--" || myOwner == ETriadCardOwner.Red && red_time != "--:--";
 
 		// 只有在刚刚轮到我的回合时才触发（从非我的回合转为我的回合）
 		if (isMyTurnNow && !isMyTurnPrevious && !aiRequestInProgress) {
-			Log.Info($"检测到轮到我的回合，触发自动AI请求 (我是{(myOwner == 1 ? "蓝方" : "红方")})");
+			Log.Info($"检测到轮到我的回合，触发自动AI请求 (我是{(myOwner == ETriadCardOwner.Blue ? "蓝方" : "红方")})");
 
 			// 检查是否还有可用手牌
-			var myDeck = myOwner == 1 ? gameState.blueDeck : gameState.redDeck;
+			var myDeck = myOwner == ETriadCardOwner.Blue ? gameState.blueDeck : gameState.redDeck;
 			var hasAvailableCards = false;
 			if (myDeck != null) {
 				for (var i = 0; i < myDeck.Length; i++) {
@@ -990,69 +966,55 @@ public class MainWindow : Window {
 		isMyTurnPrevious = isMyTurnNow;
 	}
 
-	private async Task OutputGameStateToJsonAsync(UIStateTriadGame gameState, int myOwner) {
+	private static readonly JsonSerializerOptions JsonSerializerOption = new() {
+		WriteIndented = true,
+		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+	};
+
+	private async Task OutputGameStateToJsonAsync(UIStateTriadGame gameState, ETriadCardOwner myOwner) {
 		// 棋盘
-		var board = new List<object>();
+		var board = new List<BoardJsonItem>();
 		for (var i = 0; i < 9; i++) {
 			var card = gameState.board[i];
 			var row = i / 3; // 行：上到下 0~2
 			var col = i % 3; // 列：左到右 0~2
-			if (card is { isPresent: true }) {
-				board.Add(new {
-					pos = new[] { row, col }, // [row, col]，与Python Board类一致
-					card.numU, card.numR, card.numD, card.numL, card.owner
-				});
-			}
+			if (card is { isPresent: true })
+				board.Add(new([row, col], card.numU, card.numR, card.numD, card.numL, (int)card.owner));
 		}
 		// 我的手牌
-		var myHand = new List<object>();
-		var oppHand = new List<object>();
-		var myDeck = myOwner == 1 ? gameState.blueDeck : gameState.redDeck;
-		var oppDeck = myOwner == 1 ? gameState.redDeck : gameState.blueDeck;
+		var myHand = new List<HandJsonItem>();
+		var oppHand = new List<HandJsonItem>();
+		var myDeck = myOwner == ETriadCardOwner.Blue ? gameState.blueDeck : gameState.redDeck;
+		var oppDeck = myOwner == ETriadCardOwner.Blue ? gameState.redDeck : gameState.blueDeck;
 
 		for (var originalIndex = 0; originalIndex < myDeck.Length; originalIndex++) {
 			var card = myDeck[originalIndex];
 			if (card is { isPresent: true }) {
 				// 获取该卡牌的可用状态，使用原始索引
-				var canUse = originalIndex < myHandCanUse.Length ? myHandCanUse[originalIndex] : true;
+				myHand.Add(new(card.numU, card.numR, card.numD, card.numL,
+					originalIndex >= myHandCanUse.Length || myHandCanUse[originalIndex])); // 新增：是否可用
+			}
+		}
+		foreach (var card in oppDeck)
+			if (card is { isPresent: true })
+				oppHand.Add(new(card.numU, card.numR, card.numD, card.numL)); // 对手手牌默认可用（我们不知道对手的秩序/混乱限制）
 
-				myHand.Add(new {
-					card.numU, card.numR, card.numD, card.numL, canUse // 新增：是否可用
-				});
-			}
-		}
-		foreach (var card in oppDeck) {
-			if (card is { isPresent: true }) {
-				oppHand.Add(new {
-					card.numU, card.numR, card.numD, card.numL,
-					canUse = true // 对手手牌默认可用（我们不知道对手的秩序/混乱限制）
-				});
-			}
-		}
 		var currentPlayer = 0;
 		if (blue_time != "--:--") currentPlayer = 1;
 		else if (red_time != "--:--") currentPlayer = 2;
 
-		var jsonObj = new {
-			board, myHand, oppHand, myOwner, currentPlayer,
+		var json = new PostJson {
+			board = board,
+			myHand = myHand,
+			oppHand = oppHand,
+			myOwner = (int)myOwner,
+			currentPlayer = currentPlayer,
 			rules = triadRules
 		};
-		var options = new JsonSerializerOptions {
-			WriteIndented = true,
-			Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-		};
-		var json = JsonSerializer.Serialize(jsonObj, options);
+		// var json = JsonSerializer.Serialize(jsonObj, options);
 		try {
-			// 打印完整的JSON内容到日志
-			Log.Debug($"发送到AI的数据:\n{json}");
-
-			// using var client = new HttpClient();
-			// var content = new StringContent(json, Encoding.UTF8, "application/json");
-			// var resp = await client.PostAsync("http:                                                    //127.0.0.1:5000/ai_move", content);
-
-			// var raw = await resp.Content.ReadAsStringAsync();
-			// aiResponse = DecodeUnicode(raw);
-			await Task.Run(() => aiResponse = JsonSerializer.Serialize(AiServer.ai_move(JsonSerializer.Deserialize<AiServer.PostJson>(json))));
+			Log.Debug($"发送到AI的数据:\n{JsonSerializer.Serialize(json, JsonSerializerOption)}");
+			await Task.Run(() => aiResponse = JsonSerializer.Serialize(ai_move(json)));
 			// 打印AI的响应
 			Log.Debug($"AI的响应:\n{aiResponse}");
 
@@ -1060,7 +1022,7 @@ public class MainWindow : Window {
 			if (autoExecuteAfterAi && autoAiEnabled) {
 				try {
 					var aiResult = JsonSerializer.Deserialize<AiMoveResponse>(aiResponse);
-					if (aiResult is { pos: not null }) {
+					if (aiResult is not null) {
 						Log.Info($"自动执行AI推荐: {aiResult.card} -> [{string.Join(",", aiResult.pos)}]");
 
 						// 延迟一小段时间确保UI状态稳定

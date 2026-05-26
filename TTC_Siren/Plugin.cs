@@ -5,7 +5,7 @@ using Dalamud.Plugin.Services;
 using ECommons;
 using TtcServer;
 
-namespace TTC;
+namespace TTC_Siren;
 
 public sealed class Plugin : IDalamudPlugin {
 	[PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
@@ -29,7 +29,7 @@ public sealed class Plugin : IDalamudPlugin {
 		PluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
 		ECommonsMain.Init(PluginInterface, this);
 		Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-		Utils.Init(Log, DataManager,Configuration.UnknownCardConfig);
+		Utils.Init(Log, DataManager, Configuration.UnknownCardConfig);
 	}
 
 	public void Dispose() {
@@ -37,6 +37,7 @@ public sealed class Plugin : IDalamudPlugin {
 		MainWindow.Dispose();
 		ECommonsMain.Dispose();
 	}
+
 	private void DrawUI() => WindowSystem.Draw();
 
 	public void ToggleMainUI() => MainWindow.Toggle();

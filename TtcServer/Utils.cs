@@ -51,7 +51,7 @@ public static class Utils {
 	public static readonly (int, int)[] CORNER_SPAN = [(0, 0), (0, 2), (2, 0), (2, 2)];
 	public static readonly (int, int)[] EDGE_SPAN = [(0, 1), (1, 0), (1, 2), (2, 1)];
 
-	[SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Global")] 
+	[SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Global")]
 	[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
 	public class CardDatabaseEntry {
 		public int Id { get; set; }
@@ -139,6 +139,12 @@ public static class Utils {
 
 	internal static void println(string str = "") {
 		sb.Append(str);
+		Log.Debug(sb.ToString());
+		sb.Clear();
+	}
+	internal static void println(Dictionary<int,int>dictionary) {
+		if (sb.Length != 0) sb.AppendLine();
+		foreach (var (k,v) in dictionary) sb.Append($"{k}: {v}");
 		Log.Debug(sb.ToString());
 		sb.Clear();
 	}

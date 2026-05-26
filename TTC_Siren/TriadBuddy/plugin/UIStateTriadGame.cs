@@ -11,7 +11,7 @@ public class UIStateTriadCard : IEquatable<UIStateTriadCard> {
 	public byte numR;
 	public byte rarity;
 	public byte type;
-	public byte owner;
+	public ETriadCardOwner owner;
 	public bool isPresent;
 	public bool isLocked;
 	public string? texturePath;
@@ -140,10 +140,7 @@ public class UIStateTriadGame : IEquatable<UIStateTriadGame> {
 
 		for (var idx = 0; idx < board.Length; idx++) {
 			screenOb.board[idx] = board[idx].ToTriadCard(ctx);
-			screenOb.boardOwner[idx] =
-				board[idx].owner == 1 ? ETriadCardOwner.Blue :
-				board[idx].owner == 2 ? ETriadCardOwner.Red :
-				ETriadCardOwner.Unknown;
+			screenOb.boardOwner[idx] = board[idx].owner;
 		}
 
 		var hasForcedMove = move == 2;

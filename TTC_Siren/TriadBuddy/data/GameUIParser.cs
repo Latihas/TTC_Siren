@@ -1,6 +1,6 @@
 ﻿using System;
 using FFTriadBuddy;
-using TTC;
+using TTC_Siren;
 
 namespace TriadBuddyPlugin;
 

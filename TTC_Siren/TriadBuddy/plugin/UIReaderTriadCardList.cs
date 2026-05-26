@@ -6,7 +6,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using MgAl2O4.Utils;
-using TTC;
+using TTC_Siren;
 
 namespace TriadBuddyPlugin;
 
@@ -78,7 +78,6 @@ public class UIReaderTriadCardList : IUIReader {
 			cachedAddonAgentPtr = LoadFailsafeAgent();
 
 			Plugin.Log.Info($"using agentPtr from failsafe: {(ulong)cachedAddonAgentPtr:X}");
-
 		}
 	}
 

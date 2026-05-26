@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using TTC;
+using TTC_Siren;
 
 namespace TriadBuddyPlugin;
 

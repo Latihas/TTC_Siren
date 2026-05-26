@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using ECommons.DalamudServices;
 using FFTriadBuddy;
 using Lumina.Excel.Sheets;
-using TTC;
+using TTC_Siren;
 
 namespace TriadBuddyPlugin;
 

@@ -17,26 +17,27 @@ public partial class AiServer {
 		var my_owner = parse_owner(data.myOwner.Value);
 		var opp_owner = my_owner == "red" ? "blue" : "red";
 		println(data.oppHand.ToString());
-		                          //先解析规则，然后用于智能手牌处理
+		//先解析规则，然后用于智能手牌处理
 		var (rules, open_mode) = parse_rules_and_open_mode(data.rules!);
-		                          //选拔规则特殊处理：需要全局统计星级使用情况
+		//选拔规则特殊处理：需要全局统计星级使用情况
 		if (rules.Contains("选拔")) {
 			println("检测到选拔规则，启动全局星级约束分析");
-			                          //先统计棋盘和已知手牌的星级使用情况
+			//先统计棋盘和已知手牌的星级使用情况
 			var global_star_usage = analyze_global_star_usage(board, data.myHand!, data.oppHand!);
-			println($"全局星级使用情况: {global_star_usage}");
+			println("全局星级使用情况:");
+			println(global_star_usage);
 		}
-		                          // 使用智能手牌解析，对对手手牌启用行为建模
-		                          // 蒙特卡洛模式下牌采样（牌采样（求解器内部自行处理未知卡牌）
+		// 使用智能手牌解析，对对手手牌启用行为建模
+		// 蒙特卡洛模式下牌采样（牌采样（求解器内部自行处理未知卡牌）
 		var solver_type = data.solver ?? "minminimax";
 		var mc_skip_sampling = solver_type == "monte_carlo";
-		var my_hand = parse_hand(data.myHand!, my_owner, used_cards, rules, board, false);
+		var my_hand = parse_hand(data.myHand!, my_owner, used_cards, rules, board);
 		var opp_hand = parse_hand(data.oppHand!, opp_owner, used_cards, rules, board, true, skip_sampling: mc_skip_sampling);
-		                          //玩家顺序：遵循GameState约定 - players[0]=红方, players[1]=蓝方
-		                          // currentPlayer: 1=蓝方回合, 2=红方回合, 0=未知(兼容旧客户端)
+		//玩家顺序：遵循GameState约定 - players[0]=红方, players[1]=蓝方
+		// currentPlayer: 1=蓝方回合, 2=红方回合, 0=未知(兼容旧客户端)
 		var current_player = data.currentPlayer ?? 0;
-		                          //按照红蓝方约定创建玩家列表
-		                          // 我是红方(players[0]), 对手是蓝方(players[1])
+		//按照红蓝方约定创建玩家列表
+		// 我是红方(players[0]), 对手是蓝方(players[1])
 		// 对手是红方(players[0]), 我是蓝方(players[1])
 		Player[] players = my_owner == "red" ? [new Player("me", my_hand), new Player("opp", opp_hand)] : [new Player("opp", opp_hand), new Player("me", my_hand)];
 		//确定当前回合玩家
@@ -78,7 +79,7 @@ public partial class AiServer {
 		//检查是否请求详细搜索进度 (默认关闭以提升性能)
 		var show_search_progress = data.show_search_progress;
 		List<SearchProgressData> search_progress_data = [];
-		var console_reporter = new ConsoleSearchReporter(0.5f);
+		var console_reporter = new ConsoleSearchReporter();
 		var opp_unknown_count = _count_unknown_slots_from_hand(opp_hand);
 		var use_endgame_robust = solver_type == "minimax" && _should_use_endgame_robust_mode(board, opp_unknown_count);
 
@@ -100,7 +101,6 @@ public partial class AiServer {
 			(move, _) = find_best_move_parallel(
 				game_state,
 				10,
-				false,
 				all_cards: get_all_cards(),
 				open_mode: open_mode,
 				max_time: 10,

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using ECommons.DalamudServices;
+using FFTriadBuddy;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using MgAl2O4.Utils;
 
@@ -42,7 +43,7 @@ public class UIReaderTriadGame : IUIReader {
 		[FieldOffset(0x8)] public AtkComponentBase* CardDropControl;
 		[FieldOffset(0x80)] public byte CardRarity; // 1..5
 		[FieldOffset(0x81)] public byte CardType; // 0: no type, 1: primal, 2: scion, 3: beastman, 4: garland
-		[FieldOffset(0x82)] public byte CardOwner; // 0: empty, 1: blue, 2: red
+		[FieldOffset(0x82)] public ETriadCardOwner CardOwner; // 0: empty, 1: blue, 2: red
 		[FieldOffset(0x83)] public byte NumSideU;
 		[FieldOffset(0x84)] public byte NumSideD;
 		[FieldOffset(0x85)] public byte NumSideL;

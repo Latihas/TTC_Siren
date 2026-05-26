@@ -4,8 +4,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using ECommons;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using TriadBuddyPlugin;
-using TTC;
+using TTC_Siren;
 
 namespace MgAl2O4.Utils;
 // Dalamud.Interface.UIDebug is amazing
@@ -228,5 +227,4 @@ public class GUINodeUtils {
 			Plugin.Log.Info($"{prefix}> '{entry.content}' idx:{entry.childIdx}, children:{entry.numChildren}, type:{entry.type}, addr:{entry.nodeAddr:X}, path:{entry.debugPath}");
 		}
 	}
-
 }

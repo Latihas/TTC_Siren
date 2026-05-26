@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Dalamud.Plugin.Services;
-using TTC;
+using TTC_Siren;
 
 // also know as: i should've made gamelogic into a library
 //

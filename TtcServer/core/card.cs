@@ -51,9 +51,9 @@ public class Card(int up, int right, int down, int left, string? owner = null, i
 		var left_display = get_display_value("left");
 		var lines = new[] {
 			$"[{owner_}:{cid}]",
-			$"U{up_display}",
+			$"   U{up_display}  ",
 			$"L{left_display}   R{right_display}",
-			$"D{down_display}"
+			$"   D{down_display}  "
 		};
 		return lines;
 	}

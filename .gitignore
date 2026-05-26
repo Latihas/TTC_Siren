@@ -2,3 +2,4 @@
 **/obj/
 .idea/
 **/packages.lock.json
+*.DotSettings.user

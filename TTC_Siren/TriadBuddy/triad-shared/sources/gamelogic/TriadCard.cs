@@ -18,7 +18,7 @@ public enum ETriadCardType {
 	Garlean
 }
 
-public enum ETriadCardOwner {
+public enum ETriadCardOwner : byte {
 	Unknown,
 	Blue,
 	Red

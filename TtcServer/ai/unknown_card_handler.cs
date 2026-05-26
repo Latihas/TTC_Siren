@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        /*
+/*
 智能未知牌处理模块
 根据游戏规则、已知信息和统计分析来合理处理未知手牌
 */
@@ -151,8 +151,8 @@ public class UnknownCardHandler {
             can_use: 是否可用（秩序/混乱规则）
  */
 	public List<Card> generate_opponent_cards(int count, List<string> rules, HashSet<int> used_cards, Board? board_state = null, List<Card>? known_hand = null, string? owner = null, bool can_use = true) {
-		var config =UnknownCardConfig. get_sampling_config();
-		var max_cards =UnknownCardConfig. get_max_cards_per_unknown();
+		var config = UnknownCardConfig.get_sampling_config();
+		var max_cards = UnknownCardConfig.get_max_cards_per_unknown();
 		var board_occupancy = _get_board_occupancy(board_state);
 		int actual_samples;
 		if (config.performance_mode) {
@@ -227,7 +227,7 @@ public class UnknownCardHandler {
 
 	//战略性同数卡牌采样（高级对手行为）
 	private static List<Card> _sample_strategic_same_number_cards(List<Card> available_cards, int count, Board? board_state, List<Card>? known_hand, string owner, bool can_use, List<string> rules) {
-		var config =UnknownCardConfig. get_sampling_config();
+		var config = UnknownCardConfig.get_sampling_config();
 		var behavior_config = config.opponent_behavior.同数;
 		// 更智能的同数策略分析
 		List<Card> trap_setup_cards = [];
@@ -281,7 +281,8 @@ public class UnknownCardHandler {
 	 *    """战略性加算卡牌采样（高级对手行为）"""
          类似同数，但重点关注加算组合
 	 */
-	private static List<Card> _sample_strategic_addition_cards(List<Card> available_cards, int count, Board? board_state, List<Card>? known_hand, string owner, bool can_use, List<string> rules) => _sample_for_addition_rule(available_cards, count, board_state,
+	private static List<Card> _sample_strategic_addition_cards(List<Card> available_cards, int count, Board? board_state, List<Card>? known_hand, string owner, bool can_use, List<string> rules) => _sample_for_addition_rule(available_cards, count,
+		board_state,
 		known_hand, owner, can_use, true);
 
 	//战略性同类卡牌采样（考虑雪球/破坏策略）
@@ -498,7 +499,10 @@ public class UnknownCardHandler {
 		//分析当前星级使用情况（用于评估，但不强制限制）
 		var star_usage = _analyze_star_usage(board_state, known_hand);
 		var available_stars = _calculate_available_stars(star_usage, draft_config);
-		println($"选拔模式星级分析: 已使用={star_usage}, 可用={available_stars}");
+		println("选拔模式星级分析: 已使用: ");
+		println(star_usage);
+		println("可用: ");
+		println(available_stars);
 		// 在选拔模式下，不限制采样，而是提供更广泛的预测
 		// 但是会根据星级约束给予不同的权重
 		List<Card> weighted_candidates = [];
@@ -771,7 +775,7 @@ public class UnknownCardHandler {
 			score += 3.0f;
 
 			// 检查高数值边的位置组合
-			var high_positions = values.Where(v => v >= 8).ToList();
+			var high_positions = values.Select((_, index) => index).Where(index => values[index] >= 8).ToList();
 
 			// 相邻高数值边特别适合角落（如右下角：右边+下边）
 			if (_are_adjacent_sides(high_positions)) {
@@ -780,7 +784,7 @@ public class UnknownCardHandler {
 		} else if (high_values.Count() == 1) // 单边高数值
 			score += 1.0f;
 		//AA组合特殊处理
-		var ace_positions = values.Where(v => v == 10).ToList(); // A = 10
+		var ace_positions = values.Select((_, index) => index).Where(index => values[index] == 10).ToList(); // A = 10
 		if (ace_positions.Count() >= 2) {
 			score += 4.0f;
 			// AA在相邻位置特别适合对应角落
@@ -807,10 +811,10 @@ public class UnknownCardHandler {
 		if (positions.Count < 2) return false;
 		//棋盘边的相邻关系: 0(上)-1(右), 1(右)-2(下), 2(下)-3(左), 3(左)-0(上)
 		var adjacency = new Dictionary<int, List<int>> {
-			{ 0, [1, 3] },
-			{ 1, [0, 2] },
-			{ 2, [1, 3] },
-			{ 3, [0, 2] }
+			[0] = [1, 3],
+			[1] = [0, 2],
+			[2] = [1, 3],
+			[3] = [0, 2]
 		};
 		for (var i = 0; i < positions.Count; i++)
 		for (var j = i + 1; j < positions.Count; j++)

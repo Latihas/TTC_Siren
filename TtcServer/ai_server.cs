@@ -1,4 +1,4 @@
-                                                                              using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -11,25 +11,29 @@ using static TtcServer.Utils;
 namespace TtcServer;
 
 public partial class AiServer {
-	[SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")] 
-	[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
-	public class BoardJsonItem {
-		public int[] pos { get; set; }
-		public int numU { get; set; }
-		public int numR { get; set; }
-		public int numD { get; set; }
-		public int numL { get; set; }
-		public int owner { get; set; }
-	}
 	[SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
 	[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
-	public class HandJsonItem {
-		public int numU { get; set; }
-		public int numR { get; set; }
-		public int numD { get; set; }
-		public int numL { get; set; }
-		public bool canUse { get; set; } = true;
+	public class BoardJsonItem(int[] pos, int numU, int numR, int numD, int numL, int owner) {
+		public int[] pos { get; set; } = pos;
+		public int numU { get; set; } = numU;
+		public int numR { get; set; } = numR;
+		public int numD { get; set; } = numD;
+		public int numL { get; set; } = numL;
+		public int owner { get; set; } = owner;
 	}
+
+	[SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
+	[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
+	public class HandJsonItem(int numU, int numR, int numD, int numL, bool canUse = true) {
+		public override string ToString() => $"U{numU}R{numR}D{numD}L{numL}canUse{canUse}";
+
+		public int numU { get; set; } = numU;
+		public int numR { get; set; } = numR;
+		public int numD { get; set; } = numD;
+		public int numL { get; set; } = numL;
+		public bool canUse { get; set; } = canUse;
+	}
+
 	[SuppressMessage("ReSharper", "ClassNeverInstantiated.Global")]
 	[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
 	public class PostJson {
@@ -92,8 +96,7 @@ public partial class AiServer {
 				row.Top,
 				row.Right,
 				row.Bottom,
-				row.Left,
-				null) {
+				row.Left) {
 				card_id = row.Id,
 				card_type = row.TripleTriadCardType
 			}).ToList();
@@ -132,7 +135,7 @@ public partial class AiServer {
 	}
 
 	//确保未知卡牌处理器已初始化
-	internal  static void ensure_handler_initialized() {
+	internal static void ensure_handler_initialized() {
 		if (!_handler_initialized) {
 			var all_cards = get_all_cards();
 			var card_type_map = get_card_type_map();
@@ -442,8 +445,7 @@ public partial class AiServer {
 				[..used_cards],
 				board_state,
 				known_opp_hand,
-				opp_owner,
-				true);
+				opp_owner);
 		candidates = _unique_unknown_candidates(candidates);
 		if (candidates.Count == 0)
 			return [base_state];
@@ -815,7 +817,7 @@ public partial class AiServer {
         skip_sampling: 跳过智能采样，保留未知卡牌为占位符（蒙特卡洛求解器用）
  */
 	public static List<Card> parse_hand(List<HandJsonItem> hand_json, string owner, HashSet<int> used_cards, List<string>? rules, Board? board_state = null, bool is_opponent = false, int id_offset = 1000, bool skip_sampling = false) {
-		List<(string, object)> hand_slots = []; 
+		List<(string, object)> hand_slots = [];
 		List<Card> known_cards = [];
 		var unknown_count = 0;
 		var type_map = get_card_type_map();
@@ -855,16 +857,14 @@ public partial class AiServer {
 							[..used_cards],
 							board_state,
 							known_cards,
-							owner,
-							true)
+							owner)
 						: handler.generate_unknown_cards(
 							unknown_count,
 							rules,
 							[..used_cards],
 							board_state,
 							known_cards,
-							owner,
-							true);
+							owner);
 					generated_unknown_cards = _select_unknown_cards_for_slots(
 						unknown_cards,
 						unknown_count,
