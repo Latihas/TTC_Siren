@@ -499,12 +499,12 @@ public class MainWindow() : Window("TTC_Siren") {
 			try {
 				redName = test->GetTextNodeById(186)->GetAsAtkTextNode()->NodeText.GetText();
 			} catch (Exception ex) {
-				Log.Error($"对手名字获取失败(186): {ex}");
+				Log.Warning($"对手名字获取失败(186): {ex}");
 			}
 			try {
 				redName = test->GetTextNodeById(186)->GetAsAtkTextNode()->NodeText.GetText();
 			} catch (Exception ex) {
-				Log.Error($"对手名字获取失败(181): {ex}");
+				Log.Warning($"对手名字获取失败(181): {ex}");
 			}
 			if (string.IsNullOrEmpty(redName)) redName = "对手名字获取失败";
 			try {
