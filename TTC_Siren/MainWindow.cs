@@ -502,7 +502,7 @@ public class MainWindow() : Window("TTC_Siren") {
 				Log.Warning($"对手名字获取失败(186): {ex}");
 			}
 			try {
-				redName = test->GetTextNodeById(186)->GetAsAtkTextNode()->NodeText.GetText();
+				redName = test->GetTextNodeById(181)->GetAsAtkTextNode()->NodeText.GetText();
 			} catch (Exception ex) {
 				Log.Warning($"对手名字获取失败(181): {ex}");
 			}
